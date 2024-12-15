@@ -3,16 +3,24 @@ import { SpeedGauge } from "@/components/SpeedGauge";
 import { SafetyToggle } from "@/components/SafetyToggle";
 import { EmergencyOverride } from "@/components/EmergencyOverride";
 import { MessageSettings } from "@/components/MessageSettings";
-import { Header } from "@/components/Header";
-import { useToast } from "@/hooks/use-toast";
+import { PinEntry } from "@/components/PinEntry";
+import { toast } from "@/components/ui/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const Index = () => {
   const [speed, setSpeed] = useState(0);
   const [safetyEnabled, setSafetyEnabled] = useState(false);
+  const [showPinEntry, setShowPinEntry] = useState(false);
+  const [pinMode, setPinMode] = useState<"activate" | "deactivate">("activate");
+  const [canDeactivate, setCanDeactivate] = useState(true);
   const [autoResponse, setAutoResponse] = useState(
     "I'm currently driving. I'll respond when it's safe to do so."
   );
-  const { toast } = useToast();
 
   // Simulate speed changes
   useEffect(() => {
@@ -29,35 +37,62 @@ const Index = () => {
   // Auto-enable safety mode when speed exceeds threshold
   useEffect(() => {
     if (speed > 20 && !safetyEnabled) {
-      setSafetyEnabled(true);
+      handleSafetyToggle(true);
+    }
+  }, [speed]);
+
+  const handleSafetyToggle = (enabled: boolean) => {
+    if (enabled) {
+      setPinMode("activate");
+      setShowPinEntry(true);
+    } else if (canDeactivate) {
+      setPinMode("deactivate");
+      setShowPinEntry(true);
+    } else {
       toast({
-        title: "Safety Mode Activated",
-        description: "Speed threshold exceeded. Phone functionality limited.",
+        title: "Cannot Deactivate",
+        description: "Please wait 15 minutes before deactivating safety mode.",
+        variant: "destructive",
       });
     }
-  }, [speed, safetyEnabled, toast]);
-
-  const handleEmergencyOverride = () => {
-    setSafetyEnabled(false);
-    toast({
-      title: "Emergency Override Activated",
-      description: "Safety mode has been temporarily disabled.",
-      variant: "destructive",
-    });
   };
 
-  const handleAutoResponseChange = (message: string) => {
-    setAutoResponse(message);
+  const handlePinSuccess = () => {
+    setShowPinEntry(false);
+    if (pinMode === "activate") {
+      setSafetyEnabled(true);
+      setCanDeactivate(false);
+      // Start 15-minute timer
+      setTimeout(() => {
+        setCanDeactivate(true);
+        toast({
+          title: "Safety Mode Can Be Deactivated",
+          description: "15-minute waiting period has elapsed.",
+        });
+      }, 900000); // 15 minutes in milliseconds
+    } else {
+      setSafetyEnabled(false);
+    }
+  };
+
+  const handleEmergencyOverride = () => {
+    setPinMode("deactivate");
+    setShowPinEntry(true);
     toast({
-      title: "Auto-Response Updated",
-      description: "Your new message has been saved.",
+      title: "Emergency Override",
+      description: "Please enter your PIN to disable safety mode.",
     });
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-accent p-6">
       <div className="max-w-4xl mx-auto space-y-8">
-        <Header />
+        <header className="text-center space-y-4">
+          <h1 className="text-4xl font-bold">Safe Drive Mode</h1>
+          <p className="text-muted-foreground">
+            Enhance your driving safety with automatic phone restrictions
+          </p>
+        </header>
         
         <main className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-8">
@@ -65,7 +100,7 @@ const Index = () => {
               <SpeedGauge speed={Math.round(speed)} maxSpeed={120} />
               <SafetyToggle
                 enabled={safetyEnabled}
-                onToggle={setSafetyEnabled}
+                onToggle={handleSafetyToggle}
                 className="mt-6"
               />
             </div>
@@ -79,7 +114,7 @@ const Index = () => {
           <div className="space-y-8 animate-fade-in">
             <MessageSettings
               autoResponse={autoResponse}
-              onAutoResponseChange={handleAutoResponseChange}
+              onAutoResponseChange={setAutoResponse}
             />
             
             <div className="glass-panel p-6">
@@ -94,13 +129,24 @@ const Index = () => {
                   <span className="font-medium">{safetyEnabled ? "Active" : "Inactive"}</span>
                 </li>
                 <li className="flex justify-between">
-                  <span>Auto-Response:</span>
-                  <span className="font-medium">{autoResponse ? "Configured" : "Not Set"}</span>
+                  <span>Can Deactivate:</span>
+                  <span className="font-medium">{canDeactivate ? "Yes" : "No"}</span>
                 </li>
               </ul>
             </div>
           </div>
         </main>
+
+        <Dialog open={showPinEntry} onOpenChange={setShowPinEntry}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                {pinMode === "activate" ? "Activate" : "Deactivate"} Safety Mode
+              </DialogTitle>
+            </DialogHeader>
+            <PinEntry onSuccess={handlePinSuccess} mode={pinMode} />
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
