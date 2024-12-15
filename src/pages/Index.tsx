@@ -5,11 +5,14 @@ import { EmergencyOverride } from "@/components/EmergencyOverride";
 import { MessageSettings } from "@/components/MessageSettings";
 import { PinEntry } from "@/components/PinEntry";
 import { toast } from "@/components/ui/use-toast";
+import { MapView } from "@/components/MapView";
+import { EmergencyCall } from "@/components/EmergencyCall";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 
 const Index = () => {
@@ -18,11 +21,12 @@ const Index = () => {
   const [showPinEntry, setShowPinEntry] = useState(false);
   const [pinMode, setPinMode] = useState<"activate" | "deactivate">("activate");
   const [canDeactivate, setCanDeactivate] = useState(true);
+  const [showDeactivatePin, setShowDeactivatePin] = useState(false);
   const [autoResponse, setAutoResponse] = useState(
     "I'm currently driving. I'll respond when it's safe to do so."
   );
 
-  // Simulate speed changes
+  // Simulate speed changes (in a real app, this would use GPS)
   useEffect(() => {
     const interval = setInterval(() => {
       setSpeed((prev) => {
@@ -40,6 +44,21 @@ const Index = () => {
       handleSafetyToggle(true);
     }
   }, [speed]);
+
+  // Show deactivation PIN after 15 minutes
+  useEffect(() => {
+    if (!canDeactivate) {
+      const timer = setTimeout(() => {
+        setCanDeactivate(true);
+        setShowDeactivatePin(true);
+        toast({
+          title: "Safety Mode Can Be Deactivated",
+          description: "15-minute waiting period has elapsed. You can now enter your PIN.",
+        });
+      }, 900000); // 15 minutes
+      return () => clearTimeout(timer);
+    }
+  }, [canDeactivate]);
 
   const handleSafetyToggle = (enabled: boolean) => {
     if (enabled) {
@@ -62,16 +81,14 @@ const Index = () => {
     if (pinMode === "activate") {
       setSafetyEnabled(true);
       setCanDeactivate(false);
-      // Start 15-minute timer
-      setTimeout(() => {
-        setCanDeactivate(true);
-        toast({
-          title: "Safety Mode Can Be Deactivated",
-          description: "15-minute waiting period has elapsed.",
-        });
-      }, 900000); // 15 minutes in milliseconds
+      // Email activation code would be sent here in a real implementation
+      toast({
+        title: "Activation Code Sent",
+        description: "Please check your email for the activation code.",
+      });
     } else {
       setSafetyEnabled(false);
+      setShowDeactivatePin(false);
     }
   };
 
@@ -85,69 +102,55 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-accent p-6">
-      <div className="max-w-4xl mx-auto space-y-8">
-        <header className="text-center space-y-4">
-          <h1 className="text-4xl font-bold">Safe Drive Mode</h1>
-          <p className="text-muted-foreground">
-            Enhance your driving safety with automatic phone restrictions
-          </p>
-        </header>
+    <div className="relative">
+      <MapView speed={speed} />
+      
+      <div className="fixed top-4 left-4 z-10 space-y-4">
+        <div className="glass-panel p-4">
+          <SafetyToggle
+            enabled={safetyEnabled}
+            onToggle={handleSafetyToggle}
+          />
+        </div>
         
-        <main className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="space-y-8">
-            <div className="glass-panel p-8 flex flex-col items-center animate-fade-in">
-              <SpeedGauge speed={Math.round(speed)} maxSpeed={120} />
-              <SafetyToggle
-                enabled={safetyEnabled}
-                onToggle={handleSafetyToggle}
-                className="mt-6"
-              />
-            </div>
-            
-            <EmergencyOverride
-              onOverride={handleEmergencyOverride}
-              className="w-full animate-fade-in"
-            />
-          </div>
-          
-          <div className="space-y-8 animate-fade-in">
-            <MessageSettings
-              autoResponse={autoResponse}
-              onAutoResponseChange={setAutoResponse}
-            />
-            
-            <div className="glass-panel p-6">
-              <h2 className="text-xl font-semibold mb-4">Status</h2>
-              <ul className="space-y-2">
-                <li className="flex justify-between">
-                  <span>Current Speed:</span>
-                  <span className="font-medium">{Math.round(speed)} km/h</span>
-                </li>
-                <li className="flex justify-between">
-                  <span>Safety Mode:</span>
-                  <span className="font-medium">{safetyEnabled ? "Active" : "Inactive"}</span>
-                </li>
-                <li className="flex justify-between">
-                  <span>Can Deactivate:</span>
-                  <span className="font-medium">{canDeactivate ? "Yes" : "No"}</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </main>
-
-        <Dialog open={showPinEntry} onOpenChange={setShowPinEntry}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                {pinMode === "activate" ? "Activate" : "Deactivate"} Safety Mode
-              </DialogTitle>
-            </DialogHeader>
-            <PinEntry onSuccess={handlePinSuccess} mode={pinMode} />
-          </DialogContent>
-        </Dialog>
+        <EmergencyOverride
+          onOverride={handleEmergencyOverride}
+          className="w-full"
+        />
       </div>
+
+      <EmergencyCall />
+
+      <Dialog open={showPinEntry || showDeactivatePin} onOpenChange={setShowPinEntry}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {pinMode === "activate" ? "Activate" : "Deactivate"} Safety Mode
+            </DialogTitle>
+            <DialogDescription>
+              {pinMode === "activate" 
+                ? "An activation code will be sent to your email."
+                : "Enter your PIN to deactivate safety mode."}
+            </DialogDescription>
+          </DialogHeader>
+          <PinEntry onSuccess={handlePinSuccess} mode={pinMode} />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={safetyEnabled} onOpenChange={() => {}}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Safety Mode Active</DialogTitle>
+            <DialogDescription>
+              Phone functionality is limited while driving. Emergency calls (112) are still available.
+            </DialogDescription>
+          </DialogHeader>
+          <MessageSettings
+            autoResponse={autoResponse}
+            onAutoResponseChange={setAutoResponse}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
