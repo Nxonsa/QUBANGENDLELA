@@ -45,6 +45,16 @@ const Index = () => {
     }
   }, [speed]);
 
+  const handleAccidentDetected = () => {
+    setSafetyEnabled(true);
+    setCanDeactivate(false);
+    toast({
+      title: "Safety Mode Activated",
+      description: "Safety mode has been automatically enabled due to detected accident.",
+      variant: "destructive",
+    });
+  };
+
   // Show deactivation PIN after 15 minutes
   useEffect(() => {
     if (!canDeactivate) {
@@ -81,7 +91,6 @@ const Index = () => {
     if (pinMode === "activate") {
       setSafetyEnabled(true);
       setCanDeactivate(false);
-      // Email activation code would be sent here in a real implementation
       toast({
         title: "Activation Code Sent",
         description: "Please check your email for the activation code.",
@@ -103,7 +112,10 @@ const Index = () => {
 
   return (
     <div className="relative">
-      <MapView speed={speed} />
+      <MapView 
+        speed={speed} 
+        onAccidentDetected={handleAccidentDetected}
+      />
       
       <div className="fixed top-4 left-4 z-10 space-y-4">
         <div className="glass-panel p-4">

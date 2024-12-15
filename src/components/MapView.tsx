@@ -3,6 +3,7 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { SpeedGauge } from "./SpeedGauge";
 import { toast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const defaultCenter = {
   lat: 51.505,
@@ -11,32 +12,81 @@ const defaultCenter = {
 
 interface MapViewProps {
   speed: number;
+  onAccidentDetected?: () => void;
 }
 
-export const MapView = ({ speed }: MapViewProps) => {
+export const MapView = ({ speed, onAccidentDetected }: MapViewProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [currentPosition, setCurrentPosition] = useState(defaultCenter);
+  const lastSpeedRef = useRef(speed);
+  const lastSpeedTimeRef = useRef(Date.now());
+
+  // Check for sudden speed changes that might indicate an accident
+  useEffect(() => {
+    const timeDiff = (Date.now() - lastSpeedTimeRef.current) / 1000; // Convert to seconds
+    const speedDiff = lastSpeedRef.current - speed;
+    
+    // If speed drops by more than 90km/h within 10 seconds
+    if (timeDiff <= 10 && speedDiff > 90) {
+      console.log("Potential accident detected!", {
+        previousSpeed: lastSpeedRef.current,
+        currentSpeed: speed,
+        timeDiff,
+        speedDiff
+      });
+      
+      toast({
+        title: "⚠️ Potential Accident Detected",
+        description: "Emergency services have been notified. Stay calm.",
+        variant: "destructive",
+      });
+      
+      if (onAccidentDetected) {
+        onAccidentDetected();
+      }
+    }
+    
+    lastSpeedRef.current = speed;
+    lastSpeedTimeRef.current = Date.now();
+  }, [speed, onAccidentDetected]);
 
   useEffect(() => {
-    // Initialize map
-    if (map.current || !mapContainer.current) return;
+    const initializeMap = async () => {
+      if (map.current || !mapContainer.current) return;
 
-    mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || '';
-    
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
-      center: [currentPosition.lng, currentPosition.lat],
-      zoom: 15
-    });
+      try {
+        const { data: { secret: mapboxToken } } = await supabase.functions.invoke('get-mapbox-token');
+        
+        if (!mapboxToken) {
+          throw new Error('Mapbox token not found');
+        }
 
-    // Add navigation controls
-    map.current.addControl(new mapboxgl.NavigationControl());
+        mapboxgl.accessToken = mapboxToken;
+        
+        map.current = new mapboxgl.Map({
+          container: mapContainer.current,
+          style: 'mapbox://styles/mapbox/streets-v12',
+          center: [currentPosition.lng, currentPosition.lat],
+          zoom: 15
+        });
+
+        map.current.addControl(new mapboxgl.NavigationControl());
+
+      } catch (error) {
+        console.error('Error initializing map:', error);
+        toast({
+          title: "Map Error",
+          description: "Unable to initialize map. Please try again later.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    initializeMap();
 
     // Request GPS permission and watch position
     if (navigator.geolocation) {
-      // First, show a toast guiding the user to enable GPS
       toast({
         title: "GPS Required",
         description: "Please enable GPS for real-time location tracking. Check your device settings if prompted.",
@@ -50,7 +100,6 @@ export const MapView = ({ speed }: MapViewProps) => {
           };
           setCurrentPosition(newPosition);
           
-          // Update map center
           if (map.current) {
             map.current.setCenter([newPosition.lng, newPosition.lat]);
           }
@@ -89,7 +138,6 @@ export const MapView = ({ speed }: MapViewProps) => {
       );
     }
 
-    // Cleanup
     return () => {
       if (map.current) {
         map.current.remove();
