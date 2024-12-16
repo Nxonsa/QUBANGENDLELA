@@ -19,7 +19,7 @@ export const SpeedGauge = ({ speed, maxSpeed, className }: SpeedGaugeProps) => {
   const formattedSpeed = Math.floor(speed).toString().padStart(3, '0');
 
   return (
-    <div className={cn("gauge-container relative w-32 h-32", className)} style={{ "--speed": `${percentage}` } as React.CSSProperties}>
+    <div className={cn("gauge-container relative", className)} style={{ "--speed": `${percentage}` } as React.CSSProperties}>
       <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
         <circle cx="50" cy="50" r="45" className="gauge-bg" />
         <circle
