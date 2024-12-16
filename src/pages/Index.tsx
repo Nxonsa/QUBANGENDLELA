@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { SpeedGauge } from "@/components/SpeedGauge";
 import { SafetyToggle } from "@/components/SafetyToggle";
 import { EmergencyOverride } from "@/components/EmergencyOverride";
 import { MessageSettings } from "@/components/MessageSettings";
@@ -13,7 +12,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const [speed, setSpeed] = useState(0);
@@ -22,6 +23,7 @@ const Index = () => {
   const [pinMode, setPinMode] = useState<"activate" | "deactivate">("activate");
   const [canDeactivate, setCanDeactivate] = useState(true);
   const [showDeactivatePin, setShowDeactivatePin] = useState(false);
+  const [showSafetyDialog, setShowSafetyDialog] = useState(false);
   const [autoResponse, setAutoResponse] = useState(
     "I'm currently driving. I'll respond when it's safe to do so."
   );
@@ -37,7 +39,6 @@ const Index = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Auto-enable safety mode when speed exceeds threshold
   useEffect(() => {
     if (speed > 20 && !safetyEnabled) {
       handleSafetyToggle(true);
@@ -74,11 +75,7 @@ const Index = () => {
     setShowPinEntry(false);
     if (pinMode === "activate") {
       setSafetyEnabled(true);
-      setCanDeactivate(false);
-      toast({
-        title: "Safety Mode Activated",
-        description: "Safety mode has been enabled successfully.",
-      });
+      setShowSafetyDialog(true);
     } else {
       setSafetyEnabled(false);
       setShowDeactivatePin(false);
@@ -96,6 +93,10 @@ const Index = () => {
       title: "Emergency Override",
       description: "Please enter your PIN to disable safety mode.",
     });
+  };
+
+  const handleAcceptSafetyMode = () => {
+    setShowSafetyDialog(false);
   };
 
   return (
@@ -119,14 +120,6 @@ const Index = () => {
         />
       </div>
 
-      <div className="fixed bottom-8 left-8 z-10">
-        <SpeedGauge
-          speed={speed}
-          maxSpeed={180}
-          className="bg-black/20 backdrop-blur-sm rounded-full p-2 shadow-lg"
-        />
-      </div>
-
       <EmergencyCall />
 
       <Dialog open={showPinEntry || showDeactivatePin} onOpenChange={setShowPinEntry}>
@@ -146,7 +139,7 @@ const Index = () => {
       </Dialog>
 
       {safetyEnabled && (
-        <Dialog open={safetyEnabled} onOpenChange={() => {}}>
+        <Dialog open={showSafetyDialog} onOpenChange={setShowSafetyDialog}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Safety Mode Active</DialogTitle>
@@ -158,6 +151,11 @@ const Index = () => {
               autoResponse={autoResponse}
               onAutoResponseChange={setAutoResponse}
             />
+            <DialogFooter>
+              <Button onClick={handleAcceptSafetyMode} className="w-full">
+                Accept
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       )}
