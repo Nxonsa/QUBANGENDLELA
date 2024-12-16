@@ -10,10 +10,13 @@ interface PinEntryProps {
 
 export const PinEntry = ({ onSuccess, mode }: PinEntryProps) => {
   const [pin, setPin] = useState("");
-  const correctPin = "1234"; // In a real app, this would be securely stored
+  const activatePin = "1234";
+  const deactivatePin = "2222";
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const correctPin = mode === "activate" ? activatePin : deactivatePin;
+    
     if (pin === correctPin) {
       onSuccess();
       toast({

@@ -15,8 +15,11 @@ export const SpeedGauge = ({ speed, maxSpeed, className }: SpeedGaugeProps) => {
     setPercentage(Math.min(calculatedPercentage, 100));
   }, [speed, maxSpeed]);
 
+  // Format speed to always show 3 digits
+  const formattedSpeed = speed.toString().padStart(3, '0');
+
   return (
-    <div className={cn("gauge-container", className)} style={{ "--speed": `${percentage}` } as React.CSSProperties}>
+    <div className={cn("gauge-container relative", className)} style={{ "--speed": `${percentage}` } as React.CSSProperties}>
       <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
         <circle cx="50" cy="50" r="45" className="gauge-bg" />
         <circle
@@ -29,7 +32,7 @@ export const SpeedGauge = ({ speed, maxSpeed, className }: SpeedGaugeProps) => {
       </svg>
       <div className="gauge-center">
         <div className="text-center">
-          <span className="text-4xl font-bold">{speed}</span>
+          <span className="text-4xl font-bold font-mono">{formattedSpeed}</span>
           <span className="text-sm ml-1">km/h</span>
         </div>
       </div>
