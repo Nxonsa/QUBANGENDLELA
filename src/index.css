@@ -63,15 +63,15 @@
 }
 
 .gauge-container {
-  @apply relative w-48 h-48;
+  @apply relative;
 }
 
 .gauge-bg {
-  @apply stroke-gray-200 fill-none stroke-[8];
+  @apply stroke-gray-200/30 fill-none stroke-[8];
 }
 
 .gauge-fill {
-  @apply stroke-primary fill-none stroke-[8] transition-all duration-500;
+  @apply stroke-primary/70 fill-none stroke-[8] transition-all duration-500;
 }
 
 .gauge-center {

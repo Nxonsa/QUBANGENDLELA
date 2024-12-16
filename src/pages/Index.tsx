@@ -26,7 +26,6 @@ const Index = () => {
     "I'm currently driving. I'll respond when it's safe to do so."
   );
 
-  // Simulate speed changes (in a real app, this would use GPS)
   useEffect(() => {
     const interval = setInterval(() => {
       setSpeed((prev) => {
@@ -55,21 +54,6 @@ const Index = () => {
     });
   };
 
-  // Show deactivation PIN after 15 minutes
-  useEffect(() => {
-    if (!canDeactivate) {
-      const timer = setTimeout(() => {
-        setCanDeactivate(true);
-        setShowDeactivatePin(true);
-        toast({
-          title: "Safety Mode Can Be Deactivated",
-          description: "15-minute waiting period has elapsed. You can now enter your PIN.",
-        });
-      }, 900000); // 15 minutes
-      return () => clearTimeout(timer);
-    }
-  }, [canDeactivate]);
-
   const handleSafetyToggle = (enabled: boolean) => {
     if (enabled) {
       setPinMode("activate");
@@ -92,12 +76,16 @@ const Index = () => {
       setSafetyEnabled(true);
       setCanDeactivate(false);
       toast({
-        title: "Activation Code Sent",
-        description: "Please check your email for the activation code.",
+        title: "Safety Mode Activated",
+        description: "Safety mode has been enabled successfully.",
       });
     } else {
       setSafetyEnabled(false);
       setShowDeactivatePin(false);
+      toast({
+        title: "Safety Mode Deactivated",
+        description: "Safety mode has been disabled successfully.",
+      });
     }
   };
 
@@ -131,6 +119,14 @@ const Index = () => {
         />
       </div>
 
+      <div className="fixed bottom-8 left-8 z-10">
+        <SpeedGauge
+          speed={speed}
+          maxSpeed={180}
+          className="bg-black/20 backdrop-blur-sm rounded-full p-2 shadow-lg"
+        />
+      </div>
+
       <EmergencyCall />
 
       <Dialog open={showPinEntry || showDeactivatePin} onOpenChange={setShowPinEntry}>
@@ -141,7 +137,7 @@ const Index = () => {
             </DialogTitle>
             <DialogDescription>
               {pinMode === "activate" 
-                ? "An activation code will be sent to your email."
+                ? "Enter PIN to activate safety mode."
                 : "Enter your PIN to deactivate safety mode."}
             </DialogDescription>
           </DialogHeader>
@@ -149,20 +145,22 @@ const Index = () => {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={safetyEnabled} onOpenChange={() => {}}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Safety Mode Active</DialogTitle>
-            <DialogDescription>
-              Phone functionality is limited while driving. Emergency calls (112) are still available.
-            </DialogDescription>
-          </DialogHeader>
-          <MessageSettings
-            autoResponse={autoResponse}
-            onAutoResponseChange={setAutoResponse}
-          />
-        </DialogContent>
-      </Dialog>
+      {safetyEnabled && (
+        <Dialog open={safetyEnabled} onOpenChange={() => {}}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Safety Mode Active</DialogTitle>
+              <DialogDescription>
+                Phone functionality is limited while driving. Emergency calls (112) are still available.
+              </DialogDescription>
+            </DialogHeader>
+            <MessageSettings
+              autoResponse={autoResponse}
+              onAutoResponseChange={setAutoResponse}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };
