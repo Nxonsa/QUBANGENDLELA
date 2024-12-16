@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
@@ -10,6 +10,8 @@ interface SearchBarProps {
 
 export const SearchBar = ({ map }: SearchBarProps) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [isExpanded, setIsExpanded] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,22 +52,46 @@ export const SearchBar = ({ map }: SearchBarProps) => {
     }
   };
 
+  const handleSearchClick = () => {
+    setIsExpanded(true);
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 100);
+  };
+
   return (
-    <form onSubmit={handleSearch} className="flex-1 flex gap-2">
-      <Input
-        type="text"
-        placeholder="Search location..."
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        className="bg-white/90 backdrop-blur-sm"
-        autoComplete="street-address"
-      />
-      <button
-        type="submit"
-        className="p-2 bg-white/90 backdrop-blur-sm rounded-md hover:bg-white/100 transition-colors"
-      >
-        <Search className="w-5 h-5" />
-      </button>
-    </form>
+    <div className="flex items-center gap-2">
+      {isExpanded ? (
+        <form onSubmit={handleSearch} className="flex gap-2 animate-fade-in">
+          <Input
+            ref={inputRef}
+            type="text"
+            placeholder="Search location..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="bg-white/90 backdrop-blur-sm w-[200px]"
+            autoComplete="street-address"
+            onBlur={() => {
+              if (!searchQuery) {
+                setIsExpanded(false);
+              }
+            }}
+          />
+          <button
+            type="submit"
+            className="p-2 bg-white/90 backdrop-blur-sm rounded-md hover:bg-white/100 transition-colors"
+          >
+            <Search className="w-5 h-5" />
+          </button>
+        </form>
+      ) : (
+        <button
+          onClick={handleSearchClick}
+          className="p-2 bg-white/90 backdrop-blur-sm rounded-md hover:bg-white/100 transition-colors animate-fade-in"
+        >
+          <Search className="w-5 h-5" />
+        </button>
+      )}
+    </div>
   );
 };
