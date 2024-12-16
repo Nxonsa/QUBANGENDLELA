@@ -159,10 +159,11 @@ export const MapView = ({ speed, onAccidentDetected }: MapViewProps) => {
   return (
     <div className="relative w-full h-screen">
       <div className="absolute top-4 right-4 z-10">
-        <div className="flex flex-col gap-2">
-          <div className="h-[40px]" /> {/* Spacer for the geolocate control */}
-          <div className="h-[40px]" /> {/* Spacer for the navigation control */}
-          <SearchBar map={map.current} />
+        <div className="flex flex-col items-end gap-2">
+          <div className="h-[80px]" /> {/* Spacer for both geolocate and navigation controls */}
+          <div className="w-[40px] flex justify-end">
+            <SearchBar map={map.current} />
+          </div>
         </div>
       </div>
       
