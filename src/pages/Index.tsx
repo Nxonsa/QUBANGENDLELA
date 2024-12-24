@@ -21,14 +21,23 @@ const Index = () => {
   const [safetyEnabled, setSafetyEnabled] = useState(false);
   const [showPinEntry, setShowPinEntry] = useState(true);
   const [showSafetyDialog, setShowSafetyDialog] = useState(false);
+  const [pinMode, setPinMode] = useState<"activate" | "deactivate" | "unlock">("unlock");
   const [autoResponse, setAutoResponse] = useState(
     "I'm currently driving. I'll respond when it's safe to do so."
   );
   const [appUnlocked, setAppUnlocked] = useState(false);
 
   const handlePinSuccess = () => {
-    setShowPinEntry(false);
-    setAppUnlocked(true);
+    if (pinMode === "unlock") {
+      setShowPinEntry(false);
+      setAppUnlocked(true);
+    } else if (pinMode === "activate") {
+      setSafetyEnabled(true);
+      setShowPinEntry(false);
+    } else if (pinMode === "deactivate") {
+      setSafetyEnabled(false);
+      setShowPinEntry(false);
+    }
   };
 
   useEffect(() => {
@@ -59,17 +68,16 @@ const Index = () => {
 
   const handleSafetyToggle = (enabled: boolean) => {
     if (enabled) {
+      setPinMode("activate");
       setShowPinEntry(true);
     } else {
-      toast({
-        title: "Cannot Deactivate",
-        description: "Please wait 15 minutes before deactivating safety mode.",
-        variant: "destructive",
-      });
+      setPinMode("deactivate");
+      setShowPinEntry(true);
     }
   };
 
   const handleEmergencyOverride = () => {
+    setPinMode("deactivate");
     setShowPinEntry(true);
     toast({
       title: "Emergency Override",
@@ -89,7 +97,7 @@ const Index = () => {
             <h2 className="text-2xl font-bold">Enter PIN to Access</h2>
             <p className="text-gray-500 mt-2">Please enter your PIN to continue</p>
           </div>
-          <PinEntry onSuccess={handlePinSuccess} />
+          <PinEntry onSuccess={handlePinSuccess} mode="unlock" />
         </div>
       </div>
     );
@@ -123,10 +131,14 @@ const Index = () => {
           <DialogHeader>
             <DialogTitle>Safety Mode</DialogTitle>
             <DialogDescription>
-              Enter your PIN to continue
+              {pinMode === "activate" 
+                ? "Enter PIN to activate safety mode"
+                : pinMode === "deactivate"
+                ? "Enter PIN to deactivate safety mode"
+                : "Enter PIN to access the application"}
             </DialogDescription>
           </DialogHeader>
-          <PinEntry onSuccess={handlePinSuccess} />
+          <PinEntry onSuccess={handlePinSuccess} mode={pinMode} />
         </DialogContent>
       </Dialog>
 

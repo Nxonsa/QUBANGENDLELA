@@ -5,19 +5,36 @@ import { toast } from "@/components/ui/use-toast";
 
 interface PinEntryProps {
   onSuccess: () => void;
+  mode?: "activate" | "deactivate" | "unlock";
 }
 
-export const PinEntry = ({ onSuccess }: PinEntryProps) => {
+export const PinEntry = ({ onSuccess, mode = "unlock" }: PinEntryProps) => {
   const [pin, setPin] = useState("");
-  const correctPin = "00085";
+  
+  const getPinForMode = () => {
+    switch (mode) {
+      case "activate":
+        return "1234";
+      case "deactivate":
+        return "2222";
+      case "unlock":
+        return "00085";
+      default:
+        return "00085";
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const correctPin = getPinForMode();
+    
     if (pin === correctPin) {
       onSuccess();
       toast({
-        title: "Access Granted",
-        description: "PIN verified successfully.",
+        title: "Success",
+        description: mode === "unlock" 
+          ? "Access granted."
+          : `Safety mode ${mode === "activate" ? "activated" : "deactivated"} successfully.`,
       });
     } else {
       toast({
