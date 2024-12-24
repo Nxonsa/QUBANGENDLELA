@@ -69,6 +69,18 @@ const Index = () => {
     }
   };
 
+  const handleEmergencyOverride = () => {
+    setShowPinEntry(true);
+    toast({
+      title: "Emergency Override",
+      description: "Please enter your PIN to disable safety mode.",
+    });
+  };
+
+  const handleAcceptSafetyMode = () => {
+    setShowSafetyDialog(false);
+  };
+
   if (!appUnlocked) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
@@ -109,16 +121,12 @@ const Index = () => {
       <Dialog open={showPinEntry} onOpenChange={setShowPinEntry}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {pinMode === "activate" ? "Activate" : "Deactivate"} Safety Mode
-            </DialogTitle>
+            <DialogTitle>Safety Mode</DialogTitle>
             <DialogDescription>
-              {pinMode === "activate" 
-                ? "Enter PIN to activate safety mode."
-                : "Enter your PIN to deactivate safety mode."}
+              Enter your PIN to continue
             </DialogDescription>
           </DialogHeader>
-          <PinEntry onSuccess={handlePinSuccess} mode={pinMode} />
+          <PinEntry onSuccess={handlePinSuccess} />
         </DialogContent>
       </Dialog>
 
