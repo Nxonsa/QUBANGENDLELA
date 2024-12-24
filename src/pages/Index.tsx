@@ -6,15 +6,14 @@ import { PinEntry } from "@/components/PinEntry";
 import { toast } from "@/components/ui/use-toast";
 import { MapView } from "@/components/MapView";
 import { EmergencyCall } from "@/components/EmergencyCall";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const [speed, setSpeed] = useState(0);
@@ -26,6 +25,7 @@ const Index = () => {
     "I'm currently driving. I'll respond when it's safe to do so."
   );
   const [appUnlocked, setAppUnlocked] = useState(false);
+  const [showMessageSettings, setShowMessageSettings] = useState(false);
 
   const handlePinSuccess = () => {
     if (pinMode === "unlock") {
@@ -87,6 +87,7 @@ const Index = () => {
 
   const handleAcceptSafetyMode = () => {
     setShowSafetyDialog(false);
+    setShowMessageSettings(true);
   };
 
   if (!appUnlocked) {
@@ -116,6 +117,13 @@ const Index = () => {
             enabled={safetyEnabled}
             onToggle={handleSafetyToggle}
           />
+          <Button 
+            variant="outline" 
+            className="mt-2 w-full"
+            onClick={() => setShowMessageSettings(true)}
+          >
+            Edit Auto-Response
+          </Button>
         </div>
         
         <EmergencyOverride
@@ -151,18 +159,19 @@ const Index = () => {
                 Phone functionality is limited while driving. Emergency calls (112) are still available.
               </DialogDescription>
             </DialogHeader>
-            <MessageSettings
-              autoResponse={autoResponse}
-              onAutoResponseChange={setAutoResponse}
-            />
-            <DialogFooter>
-              <Button onClick={handleAcceptSafetyMode} className="w-full">
-                Accept
-              </Button>
-            </DialogFooter>
+            <Button onClick={handleAcceptSafetyMode} className="w-full">
+              Configure Auto-Response
+            </Button>
           </DialogContent>
         </Dialog>
       )}
+
+      <MessageSettings
+        autoResponse={autoResponse}
+        onAutoResponseChange={setAutoResponse}
+        open={showMessageSettings}
+        onOpenChange={setShowMessageSettings}
+      />
     </div>
   );
 };

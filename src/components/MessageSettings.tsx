@@ -1,22 +1,37 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { toast } from "@/components/ui/use-toast";
 
 interface MessageSettingsProps {
   autoResponse: string;
   onAutoResponseChange: (message: string) => void;
-  className?: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-export const MessageSettings = ({ autoResponse, onAutoResponseChange, className }: MessageSettingsProps) => {
+export const MessageSettings = ({ 
+  autoResponse, 
+  onAutoResponseChange, 
+  open, 
+  onOpenChange 
+}: MessageSettingsProps) => {
+  const handleSave = () => {
+    onOpenChange(false);
+    toast({
+      title: "Settings Saved",
+      description: "Your auto-response message has been updated.",
+    });
+  };
+
   return (
-    <Card className={cn("w-full max-w-md glass-panel", className)}>
-      <CardHeader>
-        <CardTitle className="text-xl font-semibold">Auto-Response Settings</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Auto-Response Settings</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="auto-response">Auto-Response Message</Label>
             <Input
@@ -28,7 +43,12 @@ export const MessageSettings = ({ autoResponse, onAutoResponseChange, className 
             />
           </div>
         </div>
-      </CardContent>
-    </Card>
+        <DialogFooter>
+          <Button onClick={handleSave} className="w-full sm:w-auto">
+            Save Changes
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
