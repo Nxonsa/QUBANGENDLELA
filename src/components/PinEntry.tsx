@@ -5,23 +5,19 @@ import { toast } from "@/components/ui/use-toast";
 
 interface PinEntryProps {
   onSuccess: () => void;
-  mode: "activate" | "deactivate";
 }
 
-export const PinEntry = ({ onSuccess, mode }: PinEntryProps) => {
+export const PinEntry = ({ onSuccess }: PinEntryProps) => {
   const [pin, setPin] = useState("");
-  const activatePin = "1234";
-  const deactivatePin = "2222";
+  const correctPin = "00085";
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const correctPin = mode === "activate" ? activatePin : deactivatePin;
-    
     if (pin === correctPin) {
       onSuccess();
       toast({
-        title: `Safety Mode ${mode === "activate" ? "Activated" : "Deactivated"}`,
-        description: `PIN verified successfully.`,
+        title: "Access Granted",
+        description: "PIN verified successfully.",
       });
     } else {
       toast({
@@ -36,10 +32,10 @@ export const PinEntry = ({ onSuccess, mode }: PinEntryProps) => {
     <form onSubmit={handleSubmit} className="space-y-4">
       <Input
         type="password"
-        maxLength={4}
+        maxLength={5}
         value={pin}
         onChange={(e) => setPin(e.target.value)}
-        placeholder="Enter 4-digit PIN"
+        placeholder="Enter PIN"
         className="text-center text-2xl tracking-wider"
       />
       <Button type="submit" className="w-full">

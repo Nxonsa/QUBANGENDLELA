@@ -19,14 +19,17 @@ import { Button } from "@/components/ui/button";
 const Index = () => {
   const [speed, setSpeed] = useState(0);
   const [safetyEnabled, setSafetyEnabled] = useState(false);
-  const [showPinEntry, setShowPinEntry] = useState(false);
-  const [pinMode, setPinMode] = useState<"activate" | "deactivate">("activate");
-  const [canDeactivate, setCanDeactivate] = useState(true);
-  const [showDeactivatePin, setShowDeactivatePin] = useState(false);
+  const [showPinEntry, setShowPinEntry] = useState(true);
   const [showSafetyDialog, setShowSafetyDialog] = useState(false);
   const [autoResponse, setAutoResponse] = useState(
     "I'm currently driving. I'll respond when it's safe to do so."
   );
+  const [appUnlocked, setAppUnlocked] = useState(false);
+
+  const handlePinSuccess = () => {
+    setShowPinEntry(false);
+    setAppUnlocked(true);
+  };
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -47,7 +50,6 @@ const Index = () => {
 
   const handleAccidentDetected = () => {
     setSafetyEnabled(true);
-    setCanDeactivate(false);
     toast({
       title: "Safety Mode Activated",
       description: "Safety mode has been automatically enabled due to detected accident.",
@@ -57,10 +59,6 @@ const Index = () => {
 
   const handleSafetyToggle = (enabled: boolean) => {
     if (enabled) {
-      setPinMode("activate");
-      setShowPinEntry(true);
-    } else if (canDeactivate) {
-      setPinMode("deactivate");
       setShowPinEntry(true);
     } else {
       toast({
@@ -71,33 +69,19 @@ const Index = () => {
     }
   };
 
-  const handlePinSuccess = () => {
-    setShowPinEntry(false);
-    if (pinMode === "activate") {
-      setSafetyEnabled(true);
-      setShowSafetyDialog(true);
-    } else {
-      setSafetyEnabled(false);
-      setShowDeactivatePin(false);
-      toast({
-        title: "Safety Mode Deactivated",
-        description: "Safety mode has been disabled successfully.",
-      });
-    }
-  };
-
-  const handleEmergencyOverride = () => {
-    setPinMode("deactivate");
-    setShowPinEntry(true);
-    toast({
-      title: "Emergency Override",
-      description: "Please enter your PIN to disable safety mode.",
-    });
-  };
-
-  const handleAcceptSafetyMode = () => {
-    setShowSafetyDialog(false);
-  };
+  if (!appUnlocked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <div className="w-full max-w-md space-y-8">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold">Enter PIN to Access</h2>
+            <p className="text-gray-500 mt-2">Please enter your PIN to continue</p>
+          </div>
+          <PinEntry onSuccess={handlePinSuccess} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative">
@@ -122,7 +106,7 @@ const Index = () => {
 
       <EmergencyCall />
 
-      <Dialog open={showPinEntry || showDeactivatePin} onOpenChange={setShowPinEntry}>
+      <Dialog open={showPinEntry} onOpenChange={setShowPinEntry}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
